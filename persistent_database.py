@@ -1,3 +1,12 @@
+"""
+Author: Ido Karadi
+Project name: DB Distributed
+Description: Part of the DB Distributed program.
+This file includes the PersistentDatabase class.
+Date: 26/11/24
+"""
+
+
 from database import Database
 import pickle
 
@@ -9,15 +18,13 @@ class PersistentDatabase(Database):
         self._load_from_file()
 
     def _load_from_file(self):
-        """Loads the database from the file if it exists."""
         try:
             with open(self.file_path, "rb") as file:
                 self._data = pickle.load(file)
         except (FileNotFoundError, EOFError):
-            self._data = {}  # Initialize an empty database if the file is missing or empty.
+            self._data = {}
 
     def _save_to_file(self):
-        """Saves the current state of the database to the file."""
         with open(self.file_path, "wb") as file:
             pickle.dump(self._data, file)
 

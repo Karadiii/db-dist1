@@ -1,3 +1,12 @@
+"""
+Author: Ido Karadi
+Project name: DB Distributed
+Description: Part of the DB Distributed program.
+This file includes the SynchronizedDatabase class.
+Date: 26/11/24
+"""
+
+
 from persistent_database import PersistentDatabase
 import threading
 import multiprocessing

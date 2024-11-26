@@ -1,3 +1,12 @@
+"""
+Author: Ido Karadi
+Project name: DB Distributed
+Description: Test file for a synchronized database program with multiple set rules.
+This file runs the tests that ensure the program is working as intended.
+Date: 26/11/24
+"""
+
+
 from database import Database
 from persistent_database import PersistentDatabase
 from synchronized_database import SynchronizedDatabase

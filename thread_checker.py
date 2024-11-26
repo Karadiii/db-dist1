@@ -1,9 +1,19 @@
+"""
+Author: Ido Karadi
+Project name: DB Distributed
+Description: Part of the DB Distributed program.
+This file includes the ThreadChecker class, which includes logic for the tests file.
+Date: 26/11/24
+"""
+
+
 from synchronized_database import SynchronizedDatabase
 import threading
 import time
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+
 
 class ThreadChecker:
     def __init__(self, db_path):

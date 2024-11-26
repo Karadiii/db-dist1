@@ -1,3 +1,12 @@
+"""
+Author: Ido Karadi
+Project name: DB Distributed
+Description: Part of the DB Distributed program.
+This file includes the ProcessChecker class, which includes logic for the tests file.
+Date: 26/11/24
+"""
+
+
 from synchronized_database import SynchronizedDatabase
 import multiprocessing
 import time
@@ -5,12 +14,14 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
+
 def writer_task(db_path, lock):
     with lock:
         db = SynchronizedDatabase(db_path, mode="processes")
         db.set_value("key", "value")
         time.sleep(1)
         logging.info("Writer finished writing.")
+
 
 def reader_task(db_path, lock):
     with lock:
@@ -21,12 +32,14 @@ def reader_task(db_path, lock):
             pass
         logging.info("Reader finished reading.")
 
+
 def delayed_reader_task(db_path, lock):
     with lock:
         db = SynchronizedDatabase(db_path, mode="processes")
         db.get_value("key")
         time.sleep(2)
         logging.info("Delayed reader finished reading.")
+
 
 class ProcessChecker:
     def __init__(self, db_path):

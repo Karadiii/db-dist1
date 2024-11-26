@@ -1,46 +1,59 @@
 from synchronized_database import SynchronizedDatabase
 import multiprocessing
+import time
+import logging
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 def writer_task(db_path, lock):
-    print("Writer: Writing 'key'.")
     with lock:
         db = SynchronizedDatabase(db_path, mode="processes")
         db.set_value("key", "value")
-    print("Writer: Finished writing.")
-
+        time.sleep(1)
+        logging.info("Writer finished writing.")
 
 def reader_task(db_path, lock):
     with lock:
         db = SynchronizedDatabase(db_path, mode="processes")
         try:
-            print(f"Reader: {db.get_value('key')}")
+            db.get_value("key")
         except KeyError:
-            print("Reader: Key not found.")
+            pass
+        logging.info("Reader finished reading.")
 
+def delayed_reader_task(db_path, lock):
+    with lock:
+        db = SynchronizedDatabase(db_path, mode="processes")
+        db.get_value("key")
+        time.sleep(2)
+        logging.info("Delayed reader finished reading.")
 
 class ProcessChecker:
     def __init__(self, db_path):
         self.db_path = db_path
 
     def run(self):
-        # Create a Lock for synchronization across processes
         lock = multiprocessing.Lock()
+        writer = multiprocessing.Process(target=writer_task, args=(self.db_path, lock))
+        reader = multiprocessing.Process(target=reader_task, args=(self.db_path, lock))
+        writer.start()
+        time.sleep(0.2)
+        reader.start()
+        writer.join()
+        reader.join()
 
-        processes = []
+        readers = [multiprocessing.Process(target=reader_task, args=(self.db_path, lock)) for _ in range(10)]
+        for reader in readers:
+            reader.start()
+        for reader in readers:
+            reader.join()
 
-        # Add a writer process
-        processes.append(multiprocessing.Process(target=writer_task, args=(self.db_path, lock)))
+        delayed_reader = multiprocessing.Process(target=delayed_reader_task, args=(self.db_path, lock))
+        writer_waiting = multiprocessing.Process(target=writer_task, args=(self.db_path, lock))
+        delayed_reader.start()
+        time.sleep(0.2)
+        writer_waiting.start()
+        delayed_reader.join()
+        writer_waiting.join()
 
-        # Add multiple reader processes
-        for _ in range(5):
-            processes.append(multiprocessing.Process(target=reader_task, args=(self.db_path, lock)))
-
-        # Start and join all processes
-        for process in processes:
-            process.start()
-
-        for process in processes:
-            process.join()
-
-        print("ProcessChecker tests completed.")
+        logging.info("ProcessChecker finished.")

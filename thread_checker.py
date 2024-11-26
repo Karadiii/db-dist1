@@ -1,37 +1,54 @@
 from synchronized_database import SynchronizedDatabase
 import threading
+import time
+import logging
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 class ThreadChecker:
     def __init__(self, db_path):
-        self.db = SynchronizedDatabase(db_path, mode="threads")
+        self.db_path = db_path
 
     def run(self):
-        threads = []
+        db = SynchronizedDatabase(self.db_path, mode="threads")
 
-        def reader():
+        def writer_task():
+            db.set_value("key", "value")
+            time.sleep(1)
+            logging.info("Writer finished writing.")
+
+        def reader_task():
             try:
-                print(f"Reader: {self.db.get_value('key')}")
+                db.get_value("key")
             except KeyError:
-                print("Reader: Key not found.")
+                pass
+            logging.info("Reader finished reading.")
 
-        def writer():
-            print("Writer: Writing 'key'.")
-            self.db.set_value("key", "value")
-            print("Writer: Finished writing.")
+        def delayed_reader_task():
+            db.get_value("key")
+            time.sleep(2)
+            logging.info("Delayed reader finished reading.")
 
-        # Add a writer
-        threads.append(threading.Thread(target=writer))
+        writer = threading.Thread(target=writer_task)
+        reader = threading.Thread(target=reader_task)
+        writer.start()
+        time.sleep(0.2)
+        reader.start()
+        writer.join()
+        reader.join()
 
-        # Add multiple readers
-        for _ in range(5):
-            threads.append(threading.Thread(target=reader))
+        readers = [threading.Thread(target=reader_task) for _ in range(10)]
+        for reader in readers:
+            reader.start()
+        for reader in readers:
+            reader.join()
 
-        # Start and join all threads
-        for thread in threads:
-            thread.start()
+        delayed_reader = threading.Thread(target=delayed_reader_task)
+        writer_waiting = threading.Thread(target=writer_task)
+        delayed_reader.start()
+        time.sleep(0.2)
+        writer_waiting.start()
+        delayed_reader.join()
+        writer_waiting.join()
 
-        for thread in threads:
-            thread.join()
-
-        print("ThreadChecker tests completed.")
+        logging.info("ThreadChecker finished.")
